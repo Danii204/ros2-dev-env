@@ -43,7 +43,8 @@ ARGS=(
     --name "$NAME"
     --network host
     --gpus all
-    # La cookie de Xwayland está ligada al hostname: hay que conservar el del host.
+    # Se conserva el hostname del host por precaución con la cookie de Xwayland, aunque
+    # docker-compose.yml (que no lo fuerza) demuestra que aquí no hace falta (ver README).
     --hostname "$(hostname)"
     -e DISPLAY="${DISPLAY:-:0}"
     -e ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-0}"

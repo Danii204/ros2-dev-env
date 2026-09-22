@@ -1,0 +1,41 @@
+# Levanta un único contenedor Jazzy persistente y entra con `docker compose exec`.
+# Para escenarios con varios contenedores a la vez (p. ej. la prueba Jazzy<->Jazzy
+# de test-comm.sh) sigue usando run.sh: docker compose fija el nombre del servicio,
+# así que no vale para lanzar copias en paralelo.
+#
+# Variables de entorno opcionales (exporta las que necesites antes de `docker compose up`):
+#   USER_UID, USER_GID   por defecto 1000/1000 (tu UID/GID; comprueba `id -u` si difiere)
+#   ROS_WS               workspace del host, por defecto ~/ros2_ws
+#   ROS_DOMAIN_ID        por defecto 0, debe coincidir con el del ROS 2 nativo
+#   XAUTHORITY           por defecto la de tu sesión (echo $XAUTHORITY)
+
+services:
+  ros2-jazzy:
+    build:
+      context: .
+      args:
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+    image: ros2-jazzy-dev
+    container_name: ros2-jazzy
+    network_mode: host
+    ipc: host
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      XAUTHORITY: ${XAUTHORITY:-/dev/null}
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-/dev/null}:${XAUTHORITY:-/dev/null}:ro
+      - ${ROS_WS:-${HOME}/ros2_ws}:/home/dev/ros2_ws
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    stdin_open: true
+    tty: true
+    # Mantiene el contenedor vivo; el trabajo real se hace con `docker compose exec`.
+    command: ["sleep", "infinity"]
